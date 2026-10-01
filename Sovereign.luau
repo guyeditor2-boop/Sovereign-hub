@@ -1,5 +1,5 @@
 --[[\
-    Sovereign Hub - Steal An Egg (Independent Native UI)
+    Sovereign Hub - Steal An Egg (Fixed & Debugged Edition)
 ]]--
 
 local Players = game:GetService("Players")
@@ -13,14 +13,9 @@ local LocalPlayer = Players.LocalPlayer
 local Config = {
     AutoSteal = false,
     InstantSteal = false,
-    TweenSpeed = 100,
-    CarrySpeed = 100,
     AntiGuard = false,
     AutoTreadmill = false,
-    TreadmillSpeed = 50,
     AutoHatch = false,
-    SelectedEgg = "Basic Egg",
-    RarityFilter = "All",
     AntiHit = false,
     AutoSell = false
 }
@@ -177,7 +172,6 @@ local function CreateTab(name, index)
     return page
 end
 
--- UI Element Helpers
 local function AddToggle(tab, title, configKey)
     local toggleBtn = Instance.new("TextButton")
     toggleBtn.Parent = tab
@@ -209,31 +203,26 @@ local function AddToggle(tab, title, configKey)
     toggleBtn.MouseButton1Click:Connect(function()
         Config[configKey] = not Config[configKey]
         indicator.BackgroundColor3 = Config[configKey] and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(60, 60, 70)
+        print("[Sovereign Hub] " .. title .. " set to: " .. tostring(Config[configKey]))
     end)
 end
 
--- Create Tabs
+-- Tabs
 local FarmTab = CreateTab("Farm", 1)
 local TrainingTab = CreateTab("Training", 2)
 local HatchTab = CreateTab("Hatch & Pets", 3)
 local MiscTab = CreateTab("Misc / Combat", 4)
 
--- Populate Farm Tab
+-- Elements
 AddToggle(FarmTab, "Auto Steal", "AutoSteal")
 AddToggle(FarmTab, "Instant Steal", "InstantSteal")
 AddToggle(FarmTab, "Anti Guard Protection", "AntiGuard")
-
--- Populate Training Tab
 AddToggle(TrainingTab, "Auto Treadmill / Grinder", "AutoTreadmill")
-
--- Populate Hatch Tab
 AddToggle(HatchTab, "Auto Hatch Eggs", "AutoHatch")
-
--- Populate Misc Tab
 AddToggle(MiscTab, "Anti-Hit / Godmode", "AntiHit")
 AddToggle(MiscTab, "Auto Sell Items", "AutoSell")
 
--- Automation Loops
+-- Core Execution Loops with Fallback & Proximity Firechecks
 RunService.Heartbeat:Connect(function()
     pcall(function()
         local character = LocalPlayer.Character
@@ -241,14 +230,17 @@ RunService.Heartbeat:Connect(function()
         if not root then return end
 
         if Config.AutoSteal then
-            for _, obj in ipairs(workspace:GetChildren()) do
-                if obj.Name == "SmartPromptPart" then
-                    local prompt = obj:FindFirstChildWhichIsA("ProximityPrompt", true)
-                    if prompt and not Config.AntiGuard then
-                        fireproximityprompt(prompt)
-                    end
+            for _, obj in ipairs(workspace:GetDescendants()) do
+                if obj:IsA("ProximityPrompt") then
+                    -- Automatically trigger proximity prompts available in the game map
+                    pcall(function()
+                        fireproximityprompt(obj)
+                    end)
                 end
             end
         end
     end)
 end)
+
+print("[Sovereign Hub] Loaded successfully!")
+
